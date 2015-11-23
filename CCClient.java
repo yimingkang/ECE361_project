@@ -33,21 +33,30 @@ public class CCClient {
 	public static int SampleRTT;
 	public static final double alpha=0.125;
 	public static final double beta=0.25;
+    public static Socket socket;
+    public static String fileName;
 	/**
 	 * @param args
 	 */
-	public static void main(String[] args) {
+    CCClient(Socket socket, double estimated_delay_ms, String fname){
+        EstimatedRTT = (int) estimated_delay_ms;
+        socket = socket;
+        fileName = fname;
+    }
 
-		host="localhost";
-		port=9876;
+	public static void main(String[] args) {
 		try
 		{
-            Socket socket = new Socket(host, port);
 			socket.setTcpNoDelay(true);
-			System.out.println("Connected to : "+ host+ ":"+socket.getPort());
+
+            // first read file and figure out the numebr of packets to send
+            File file=new File(fileName);
+
+            // get a buffer of size 1004
+            byte[] buffer = new byte[1004];
+            FileInputStream fin= new FileInputStream(file);
 
 			//reader and writer:
-			//BufferedReader reader=...
             DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
 			Scanner scr = new Scanner(System.in);
 
