@@ -1,18 +1,8 @@
 import java.awt.Color;
 import java.awt.image.SampleModel;
-import java.io.BufferedInputStream;
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
-import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.ServerSocket;
-import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Scanner;
-
-
+import java.io.*;
+import java.net.*;
+import java.util.*;
 
 public class CCClient {
 
@@ -21,14 +11,13 @@ public class CCClient {
 	final static String CRLF="\r\n";
 	public static int wstart;
 	static long totalTime;
-	static int timeOut;
 	public static int lastAck = 0;
 	static int sent = 1;
 	static long[] send_timer;
 
 	static long startTime;
 	static long endTime;
-	public static int EstimatedRTT;
+	public static int timeOut;
 	public static int DevRTT;
 	public static int SampleRTT;
 	public static final double alpha=0.125;
@@ -38,13 +27,13 @@ public class CCClient {
 	/**
 	 * @param args
 	 */
-    CCClient(Socket socket, double estimated_delay_ms, String fname){
-        EstimatedRTT = (int) estimated_delay_ms;
-        socket = socket;
+    CCClient(Socket sock, double estimated_delay_ms, String fname){
+        timeOut = (int) estimated_delay_ms;
+        socket = sock;
         fileName = fname;
     }
 
-	public static void main(String[] args) {
+	public static void sendFile() {
 		try
 		{
 			socket.setTcpNoDelay(true);
@@ -56,12 +45,16 @@ public class CCClient {
             byte[] buffer = new byte[1004];
             FileInputStream fin= new FileInputStream(file);
 
+            int fileSize = (int) file.length();
+			int noPackets = fileSize / 1000;
+            if (fileSize % 1000 != 0){
+                // need to consider the "extra" bytes
+                noPackets ++;
+            }
+			System.out.println("File " + fileName + " has " + noPackets + " packets");
+
 			//reader and writer:
             DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
-			Scanner scr = new Scanner(System.in);
-
-			System.out.println("Enter number of packets to be sent to the server [0-127], 0 to Quit: ");
-			int noPackets = scr.nextInt();
 
 			//define the thread and start it
             Thread thread = new Thread(new Listener(socket, noPackets));
@@ -70,11 +63,6 @@ public class CCClient {
 			//send the noPackets to the server
             writer.write(noPackets);
 
-
-			EstimatedRTT=1000;
-			// EstimatedRTT=1200;
-			DevRTT=100;
-			timeOut = EstimatedRTT+4*DevRTT;//in milliseconds
 			lastAck=0;
 			sent=1;
 			int cwnd = 1;
@@ -140,14 +128,6 @@ public class CCClient {
 
 			// writer.flush();
 			socket.close();
-            long transmission_time = System.currentTimeMillis() - begin;
-            System.out.println("***** STATISTICS *****");
-            System.out.println("Assume RTT=" + EstimatedRTT + "ms");
-            System.out.println("Assume Timeout=" + timeOut + "ms");
-            System.out.println("Operation took " + transmission_time/1000.0 + "s");
-            System.out.println("Estimated #RTT is " + nRTT + " if overhead is ignored");
-            System.out.println("Actual #RTT is " + 1.0 * transmission_time/EstimatedRTT);
-			System.out.println("Quitting...");
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
