@@ -15,7 +15,6 @@ public class Listener implements Runnable {
 
     @Override 
     public void run() {
-        System.out.println("Listener object run() method is called!");
         try{ 
             BufferedReader socket_reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             // DataInputStream readInputStream = new DataInputStream(socket.getInputStream());

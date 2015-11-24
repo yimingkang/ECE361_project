@@ -22,10 +22,6 @@ public class MainClass {
 
 
             // send it off to a file client
-            if (socket == null){
-                System.out.println("Socket broken???");
-                return;
-            }
             CCClient sender = new CCClient(socket, estimatedTimeout, fileName);
             sender.sendFile();
             while(!socket.isClosed()){

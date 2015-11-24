@@ -29,7 +29,7 @@ public class CCClient {
 	 * @param args
 	 */
     CCClient(Socket sock, double estimated_delay_ms, String fname){
-        timeOut = (int) estimated_delay_ms;
+        timeOut = (int) estimated_delay_ms + 200;
         socket = sock;
         fileName = fname;
     }
@@ -56,6 +56,7 @@ public class CCClient {
                 noPackets ++;
             }
 			System.out.println("File " + fileName + " has " + noPackets + " packets");
+            System.out.println("TimeOut value is set to: " + timeOut + " ms");
 
 			//reader and writer:
             DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
@@ -72,10 +73,7 @@ public class CCClient {
 			sent=1;
 			int cwnd = 1;
 			int ssthresh = 16;
-            int second_last_ack = 0;
-			int RTT_count = 0;
             boolean timeOutOccured = false;
-            long begin = System.currentTimeMillis();
 
 			startTime=System.currentTimeMillis();
 			try {
@@ -99,17 +97,17 @@ public class CCClient {
                             buffer[1] = (byte) (sent >> 16);
                             buffer[0] = (byte) (sent >> 24);
                             // write everyting out
-                            writer.write(buffer, 0, len);
+                            writer.write(buffer, 0, len + 4);
                             sent +=1;
-                            System.out.println("Setting sent to: " + sent);
                         }
                     }
                     startTime = System.currentTimeMillis();
                     timeOutOccured = false;
                     // Keep waiting until either: 1) timeout occurs; or 2) lastAck==send
                     while (lastAck < sent - 1){
+                        Thread.sleep(1);
                         if ((System.currentTimeMillis() - startTime) > timeOut) {
-                            System.out.println("Timeout!");
+                            System.out.println("Timeout!"); 
 
                             // reset sent
                             sent = lastAck+1;
