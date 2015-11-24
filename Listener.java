@@ -24,7 +24,7 @@ public class Listener implements Runnable {
             while(true){
                 // readInputStream.read(buffer);
                 // int ackNum = (int)(buffer[0]);
-                int ackNum = socket_reader.read();
+                int ackNum = Integer.parseInt(socket_reader.readLine());
                 System.out.println("Client got ack: " + ackNum);
                 ackArray[ackNum] = 1;
                 if(ackNum != CCClient.lastAck + 1){

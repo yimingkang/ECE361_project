@@ -3,6 +3,7 @@ import java.awt.image.SampleModel;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.nio.channels.FileChannel;
 
 public class CCClient {
 
@@ -45,6 +46,9 @@ public class CCClient {
             byte[] buffer = new byte[1004];
             FileInputStream fin= new FileInputStream(file);
 
+            // a file channel is used to set file pointer position
+            FileChannel fc = fin.getChannel();
+
             int fileSize = (int) file.length();
 			int noPackets = fileSize / 1000;
             if (fileSize % 1000 != 0){
@@ -56,12 +60,13 @@ public class CCClient {
 			//reader and writer:
             DataOutputStream writer = new DataOutputStream(socket.getOutputStream());
 
+            // send file name and noPackets to server
+            writer.writeBytes(fileName + CRLF);
+            writer.writeBytes(Integer.toString(noPackets) + CRLF);
+
 			//define the thread and start it
             Thread thread = new Thread(new Listener(socket, noPackets));
             thread.start();
-
-			//send the noPackets to the server
-            writer.write(noPackets);
 
 			lastAck=0;
 			sent=1;
@@ -70,8 +75,6 @@ public class CCClient {
             int second_last_ack = 0;
 			int RTT_count = 0;
             boolean timeOutOccured = false;
-            int nRTT = 0;
-            int send_segment = 0;
             long begin = System.currentTimeMillis();
 
 			startTime=System.currentTimeMillis();
@@ -80,24 +83,40 @@ public class CCClient {
 				{
                     System.out.println("Current cwnd: " + cwnd);
                     while (sent - lastAck <= cwnd && sent <= noPackets){
-                        send_segment = 1;
-                        System.out.println(nRTT + " !!Client sending packet: " + sent);
-                        writer.write(sent);
-                        sent +=1;
+                        System.out.println(" Client sending packet: " + sent);
+
+                        // read from position 4, up to 1000 chars
+                        int len = fin.read(buffer, 4, 1000);
+                        if (len<0){
+                            // this is BAD
+                            System.out.println("ERROR: EOF reached, impossiburrrr");
+                            throw new Exception();
+                        }else{
+                            // first fill in the 'packet' field ...
+                            // little endian
+                            buffer[3] = (byte) (sent >> 0);
+                            buffer[2] = (byte) (sent >> 8);
+                            buffer[1] = (byte) (sent >> 16);
+                            buffer[0] = (byte) (sent >> 24);
+                            // write everyting out
+                            writer.write(buffer, 0, len);
+                            sent +=1;
+                            System.out.println("Setting sent to: " + sent);
+                        }
                     }
-                    nRTT += send_segment;
-                    send_segment = 0;
                     startTime = System.currentTimeMillis();
                     timeOutOccured = false;
                     // Keep waiting until either: 1) timeout occurs; or 2) lastAck==send
                     while (lastAck < sent - 1){
-                        // System.out.println("lastAck: " + lastAck+"; sent: "+sent);
-                        Thread.sleep(1);
-                        // Timeout occurs!!!
                         if ((System.currentTimeMillis() - startTime) > timeOut) {
                             System.out.println("Timeout!");
+
                             // reset sent
                             sent = lastAck+1;
+                            
+                            // reset file pointer
+                            fc.position((sent-1) * 1000);
+
                             // reset ssthresh and cwnd
                             ssthresh = cwnd/2;
                             cwnd = 1;
