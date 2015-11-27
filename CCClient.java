@@ -29,7 +29,7 @@ public class CCClient {
 	 * @param args
 	 */
     CCClient(Socket sock, double estimated_delay_ms, String fname){
-        timeOut = (int) estimated_delay_ms + 200;
+        timeOut = (int) estimated_delay_ms;
         socket = sock;
         fileName = fname;
     }
@@ -107,11 +107,11 @@ public class CCClient {
                     while (lastAck < sent - 1){
                         Thread.sleep(1);
                         if ((System.currentTimeMillis() - startTime) > timeOut) {
-                            System.out.println("Timeout!"); 
+                            System.out.println("Timeout!");
 
                             // reset sent
                             sent = lastAck+1;
-                            
+
                             // reset file pointer
                             fc.position((sent-1) * 1000);
 
