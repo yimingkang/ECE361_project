@@ -1,5 +1,5 @@
 CC=javac
-OBJS=Listener.java CCClient.java RoutingClient.java MainClass.java
+OBJS=Listener.java CCClient.java RoutingClient.java MainClient.java
 
 all:
 	$(CC) $(OBJS)

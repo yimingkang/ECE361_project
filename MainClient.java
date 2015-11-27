@@ -1,8 +1,13 @@
+/*
+Group code: y0z3
+Zexuan Wang 998851773
+Yiming Kang 998676730
+*/
 import java.net.*;
 import java.util.*;
 import java.io.*;
 
-public class MainClass {
+public class MainClient {
     public static Socket socket;
     public static double estimatedTimeout;
 

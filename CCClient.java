@@ -1,3 +1,8 @@
+/*
+Group code: y0z3
+Zexuan Wang 998851773
+Yiming Kang 998676730
+*/
 import java.awt.Color;
 import java.awt.image.SampleModel;
 import java.io.*;
